@@ -1,0 +1,67 @@
+body {
+	padding: 10px;
+	font-family: Trebuchet MS;
+	background: rgb(10, 10, 75)
+}
+#pts {
+	font-style: italic;
+	color: rgb(0, 220, 255);
+	font-size: 1.2em;
+	text-shadow: 2px 2px 5px rgb(0, 0, 0)
+}
+button {
+	user-select: none
+}
+#container {
+	display: grid;
+	gap: 12px;
+	padding: 16px;
+	grid-template-rows: repeat(5, 1fr)
+	grid-template-columns: repeat(auto-fit, 1fr)
+}
+.pts {
+	background: linear-gradient(to left, rgb(0, 0, 255), rgb(0, 0, 0));
+	color: rgb(0, 255, 255);
+	border: 2px dashed rgb(0, 255, 100);
+	padding: 16px;
+	border-radius: 7px;
+	transition: transform 0.25s ease
+}
+.save-area {
+	background: rgba(50, 255, 255, 0.25);
+	padding: 12px;
+	border-radius: 5px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center
+}
+#import, #export {
+	background: rgb(0, 0, 0);
+	font-family: Arial;
+	border: 0.5px solid rgb(0, 255, 0);
+	color: rgb(0, 100, 0)
+}
+#hard-reset {
+	background: rgb(255, 0, 0);
+	color: rgb(0, 0, 0);
+	border: 5px solid rgb(255, 255, 255)
+}
+.pts:hover {
+	transform: scale(1.03)
+}
+.pts:active {
+	transform: scale(0.95)
+}
+.pts.locked {
+	opacity: 0.55;
+	border: 1px dashed rgba(150, 150, 150, 1);
+	transform: scale(0.9)
+}
+.pts.locked:hover, .pts.locked:active {
+	transform: scale(0.9)
+}
+.pts.maxed {
+	border: 2px solid rgb(0, 255, 0);
+	font-style: italic;
+}
