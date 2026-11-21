@@ -165,7 +165,7 @@ let upgrades = [
 			{
 				"boost": "pps",
 				"formula": Math.log10(stats.pps / 2.5),
-				"effect": 1
+				"effect": 1,
 				"type": "multiply",
 				"synergizes": true
 			}
@@ -188,11 +188,15 @@ function applyBoosts(bo) {
 		
         if (b.boost === "time") reset()
     }
+	applySynergizedBoosts(bo)
 }
 function applySynergizedBoosts(bo) {
-	let synergized = bo.filter(b => b.synergized !== undefined && b.formula !== undefined)
-	for (let s of synergized) s.effect = s.formula
-	applyBoosts(s)
+    let synergized = bo.filter(b => b.synergizes && b.boost === "pps")
+    let boosts = synergized.map(b => ({
+        ...b,
+		effect: b.formula
+    }))
+    applyBoosts(boosts)
 }
 function buyUpg(id) {
     let idx = upgrades.findIndex(u => u.id === id)
