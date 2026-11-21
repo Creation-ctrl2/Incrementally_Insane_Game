@@ -134,6 +134,42 @@ let upgrades = [
 				"type": "divide"
 			}
 		]
+	},
+	{
+	    "id": 6,
+		"name": "How much points do you want?!",
+		"description": "Multiply point gain by 1.001 every level.",
+	    "bsc": 1000,
+	    "cost": 1000,
+	    "count": 0,
+	    "max": 100,
+	    "scale": 1.002,
+	    "boosts": [
+	        {
+		        "boost": "pps",
+				"effect": 1.001,
+				"type": "multiply"
+             }
+	    ]
+	},
+	{
+		"id": 7,
+		"name": "Ooooh! Synergizing!",
+		"description": "Points boost points. Formula: log10(pps / 2.5).",
+		"bsc": 2500,
+		"cost": 2500,
+		"count": 0,
+		"max": 1,
+		"scale": 1,
+		"boosts": [
+			{
+				"boost": "pps",
+				"formula": Math.log10(stats.pps / 2.5),
+				"effect": 1
+				"type": "multiply",
+				"synergizes": true
+			}
+		]
 	}
 ]
 function showPoints() {
@@ -145,12 +181,18 @@ function showPoints() {
 }
 function applyBoosts(bo) {
 	for (let b of bo) {
-            if (b.type === "add") stats[b.boost] += b.effect
-            else if (b.type === "subtract") stats[b.boost] -= b.effect
+        if (b.type === "add") stats[b.boost] += b.effect
+        else if (b.type === "subtract") stats[b.boost] -= b.effect
 		else if (b.type === "multiply") stats[b.boost] *= b.effect
 		else if (b.type === "divide") stats[b.boost] /= b.effect
-            if (b.boost === "time") reset()
-        }
+		
+        if (b.boost === "time") reset()
+    }
+}
+function applySynergizedBoosts(bo) {
+	let synergized = bo.filter(b => b.synergized !== undefined && b.formula !== undefined)
+	for (let s of synergized) s.effect = s.formula
+	applyBoosts(s)
 }
 function buyUpg(id) {
     let idx = upgrades.findIndex(u => u.id === id)
@@ -170,9 +212,9 @@ function buyUpg(id) {
         up.count++
         up.cost = Math.floor(up.cost * up.scale)
         applyBoosts(up.boosts, up.count)
-		 renderUpgrades()
+		renderUpgrades()
         showPoints()
-		 localStorage.setItem(SAVE_KEY, getSaveStr())
+		localStorage.setItem(SAVE_KEY, getSaveStr())
         return
     }
 }
@@ -187,9 +229,8 @@ function renderUpgrades() {
             buyUpg(upg.id)
         })
         if (upg.count >= upg.max) btn.classList.add("maxed")
-		 else if (points < upg.cost) btn.classList.add("locked")
-
-document.getElementById('container').appendChild(btn)
+		else if (points < upg.cost) btn.classList.add("locked")
+		document.getElementById('container').appendChild(btn)
     })
 }
 renderUpgrades()
