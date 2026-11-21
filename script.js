@@ -164,7 +164,7 @@ let upgrades = [
 		"boosts": [
 			{
 				"boost": "pps",
-				"formula": Math.log10(stats.pps / 2.5),
+				"formula": "Math.log10(stats.pps / 2.5)",
 				"effect": 1,
 				"type": "multiply",
 				"synergizes": true
@@ -181,22 +181,28 @@ function showPoints() {
 }
 function applyBoosts(bo) {
 	for (let b of bo) {
+		if (b.synergizes || b.effect < 0) continue
         if (b.type === "add") stats[b.boost] += b.effect
         else if (b.type === "subtract") stats[b.boost] -= b.effect
 		else if (b.type === "multiply") stats[b.boost] *= b.effect
-		else if (b.type === "divide") stats[b.boost] /= b.effect
+		else if (b.type === "divide") stats[b.boost] /= (b.effect !== 0 ? b.effect : 1)
 		
         if (b.boost === "time") reset()
     }
 	applySynergizedBoosts(bo)
 }
 function applySynergizedBoosts(bo) {
-    let synergized = bo.filter(b => b.synergizes && b.boost === "pps")
-    let boosts = synergized.map(b => ({
-        ...b,
-		effect: b.formula
-    }))
-    applyBoosts(boosts)
+    let synergized = bo.filter(b => b.synergizes)
+    for (let b of synergized) {
+		// I know, I know, eval is evil, but I gotta.
+		b.effect = eval(b.formula)
+		if (b.type === "add") stats[b.boost] += b.effect
+        else if (b.type === "subtract") stats[b.boost] -= b.effect
+		else if (b.type === "multiply") stats[b.boost] *= b.effect
+		else if (b.type === "divide") stats[b.boost] /= (b.effect !== 0 ? b.effect : 1)
+		
+        if (b.boost === "time") reset()
+	}
 }
 function buyUpg(id) {
     let idx = upgrades.findIndex(u => u.id === id)
@@ -242,7 +248,7 @@ showPoints()
 let loop = setInterval(function() {
     points += stats.pps
     showPoints()
-}, stats.time)
+}, Math.max(1, stats.time)j
 let s = localStorage.getItem(SAVE_KEY)
 if (s) loadSaveStr(s)
 let save = setInterval(() => localStorage.setItem(SAVE_KEY, getSaveStr()), 5000)
@@ -251,7 +257,7 @@ function reset() {
     loop = setInterval(function() {
         points += stats.pps
         showPoints()
-    }, stats.time)
+    }, Math.max(1, stats.time))
 }
 function getSaveStr() {
 	let stat = { points, "upgrades": upgrades.map(u => ({"id": u.id, "count": u.count})) }
@@ -262,12 +268,27 @@ function getSaveStr() {
 function loadSaveStr(save) {
 	try {
 		let decoded = JSON.parse(atob(save.trim()))
-		if (typeof decoded.points !== "number" || !Array.isArray(decoded.upgrades)) throw new TypeError("Points wasn't a number or upgrades wasn't an array!")
+		if (
+			typeof decoded.points !== "number" ||
+			!Number.isFinite(decoded.points) ||
+			decoded.points < 0 ||
+			!Array.isArray(decoded.upgrades)
+		) { throw new Error() }
 		points = decoded.points
 		stats = {...base}
+		const nextStats = { ...base }
+		const nextCounts = {}
+		for (let u of upgrades) {
+			const savedUp = decoded.upgrades.find(up => up.id === u.id)
+			const count = Number(savedUp?.count)
+			if (!Number.isFinite(count)) throw new TypeError("Invalid upgrade count!")
+			nextCounts[u.id] = Math.max(0, Math.min(u.max, Math.floor(count)))
+		}
 		upgrades.forEach(u => {
 			let decodedUp = decoded.upgrades.find(up => up.id === u.id)
-			u.count = decodedUp?.count ?? 0
+			let saved = Number(decodedUp?.count)
+			if (!Number.isFinite(savedCount)) saved = 0
+			u.count = Math.max(0, Math.min(u.max, Math.floor(saved)))
 			u.cost = Math.floor(u.bsc * (u.scale ** u.count))
 			for (let i = 0; i < u.count; i++) applyBoosts(u.boosts)
 		})
